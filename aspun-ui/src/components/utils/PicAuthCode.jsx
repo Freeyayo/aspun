@@ -32,7 +32,7 @@ export default forwardRef((props, ref) => {
     dotColorMin: 0,
     dotColorMax: 255,
     textStyle: {
-      fontSize: "12px",
+      fontSize: "14px",
       color: "gray",
       marginLeft: "6px",
       cursor: "pointer",

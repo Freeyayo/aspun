@@ -1,6 +1,8 @@
 import React, { useRef } from "react";
-import { Button, Checkbox, Form, Input, Row, Col } from "antd";
+import { Button, Form, Input, Row, Col } from "antd";
+import { CredentialService } from "../../api";
 import PicAuthCode from "../utils/PicAuthCode";
+import { useNavigate } from "react-router-dom";
 import "./Login.css";
 
 const setCode = () => {
@@ -13,15 +15,31 @@ const setCode = () => {
 };
 
 const Login = () => {
+  const [form] = Form.useForm();
+  const navigate = useNavigate();
   const authPicRefs = useRef(null);
 
   const refresh = () => {
     authPicRefs.current.refreshCapcha();
   };
 
-  const onFinish = (values) => {
-    console.log(authPicRefs.current.getCapchaCode());
-    console.log("Success:", values);
+  const onFinish = async (values) => {
+    const username = form.getFieldValue("username");
+    const password = form.getFieldValue("password");
+    const capchaCode = form.getFieldValue("capcha");
+    const userInputCapchaCode = authPicRefs.current.getCapchaCode();
+    if (capchaCode.toLowerCase() !== userInputCapchaCode.toLowerCase()) {
+      alert("capchat wrong!");
+      return;
+    }
+    await CredentialService.login(username, password)
+      .then((res) => res.json())
+      .then((res) => {
+        const { status } = res;
+        if (status === "success") {
+          navigate("/landing-page");
+        }
+      });
   };
 
   const onFinishFailed = (errorInfo) => {
@@ -38,6 +56,7 @@ const Login = () => {
         onFinish={onFinish}
         onFinishFailed={onFinishFailed}
         autoComplete="off"
+        form={form}
       >
         <Form.Item
           label="Username"
@@ -55,16 +74,16 @@ const Login = () => {
           <Input.Password />
         </Form.Item>
 
-        <Form.Item label="Captcha">
+        <Form.Item label="Capcha">
           <Row gutter={8}>
             <Col span={12}>
               <Form.Item
-                name="captcha"
+                name="capcha"
                 noStyle
                 rules={[
                   {
                     required: true,
-                    message: "Please input the captcha you got!",
+                    message: "Please input the capcha you got!",
                   },
                 ]}
               >
@@ -72,7 +91,7 @@ const Login = () => {
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Button onClick={refresh}>Get captcha</Button>
+              <Button onClick={refresh}>Get capcha</Button>
             </Col>
           </Row>
         </Form.Item>
