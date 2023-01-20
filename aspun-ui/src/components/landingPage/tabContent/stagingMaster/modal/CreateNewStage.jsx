@@ -38,7 +38,7 @@ const CreateNewStage = () => {
         onCancel={handleCancel}
         footer
       >
-        <CreateNewStageModalRender />
+        <CreateNewStageModalRender closeModal={handleCancel} />
       </Modal>
     </div>
   );

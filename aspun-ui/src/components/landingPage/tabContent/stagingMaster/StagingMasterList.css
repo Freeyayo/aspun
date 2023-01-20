@@ -1,3 +1,12 @@
 .list-item-title {
   font-weight: 600;
 }
+
+.list-item {
+  flex: 1;
+}
+
+.list-item-text-container {
+  display: flex;
+  justify-content: center;
+}
