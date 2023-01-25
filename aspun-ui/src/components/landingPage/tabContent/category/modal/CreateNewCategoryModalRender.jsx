@@ -7,11 +7,15 @@ import { useForm } from "antd/es/form/Form";
 
 const { Option } = Select;
 
-const fetchDropdownOptions = async (setStage, setUserRole) => {
+const fetchDropdownOptions = async (
+  setStage,
+  setUserRole,
+  setCategoryOptions
+) => {
   await CRUDService.getCreateCategoryDropdown()
     .then((res) => res.json())
     .then((res) => {
-      const { stageList, userRoles } = res.result;
+      const { stageList, userRoles, categoryIdsList } = res.result;
       const stageOptions = stageList.map((stageData) => {
         const { id, stage } = stageData;
         return {
@@ -30,6 +34,7 @@ const fetchDropdownOptions = async (setStage, setUserRole) => {
       });
       setStage(stageOptions);
       setUserRole(userRoleOptions);
+      setCategoryOptions(categoryIdsList);
     });
 };
 
@@ -37,6 +42,7 @@ const CreateNewCategoryModalContent = ({ closeModal }) => {
   const [form] = useForm();
   const [stageOptions, setStageOptions] = useState([]);
   const [userRolesOptions, setUserRolesOptions] = useState([]);
+  const [parentCategoryOptions, setParentCategoryOptions] = useState([]);
 
   const utils = useContext(CategoryContext);
   const {
@@ -46,7 +52,11 @@ const CreateNewCategoryModalContent = ({ closeModal }) => {
   } = utils;
 
   useEffect(() => {
-    fetchDropdownOptions(setStageOptions, setUserRolesOptions);
+    fetchDropdownOptions(
+      setStageOptions,
+      setUserRolesOptions,
+      setParentCategoryOptions
+    );
   }, [needFetchCreateCategoryDropdown]);
 
   const onFinish = async (values) => {
@@ -166,10 +176,9 @@ const CreateNewCategoryModalContent = ({ closeModal }) => {
         >
           <Select>
             <Option value="NIL">NIL</Option>
-            <Option value="1">1</Option>
-            <Option value="2">2</Option>
-            <Option value="3">3</Option>
-            <Option value="4">4</Option>
+            {parentCategoryOptions.map((option) => {
+              return <Option value={option}>{option}</Option>;
+            })}
           </Select>
         </Form.Item>
 
