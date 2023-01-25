@@ -19,12 +19,14 @@ const CreateNewStageModalContent = ({ closeModal }) => {
         const { status, result } = res;
         if (status === "success") {
           if (result === "inserted") {
-            alert("inserted successful");
+            alert("stage master inserted successful");
             closeModal();
             updateTrigger(!needUpdateStageMasterList);
+            form.resetFields();
             return;
           }
-          if (result === "has_stage") alert("can not insert replicate item");
+          if (result === "has_stage")
+            alert("can not insert duplicate stage master");
           return;
         }
         alert("inserted failed, error:", result);

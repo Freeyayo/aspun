@@ -1,38 +1,103 @@
-import React from "react";
+import React, { useState, useEffect, useContext } from "react";
 import "./CreateNewCategoryModalRender.css";
 import { Button, Form, Input, Select } from "antd";
+import { CRUDService } from "../../../../../api";
+import { CategoryContext } from "../Category";
+import { useForm } from "antd/es/form/Form";
 
 const { Option } = Select;
 
-const stageOptions = [
-  {
-    value: "Inspection",
-    label: "inspection",
-  },
-  {
-    value: "Sampling",
-    label: "sampling",
-  },
-  {
-    value: "Schedule",
-    label: "schedule",
-  },
-];
+const fetchDropdownOptions = async (setStage, setUserRole) => {
+  await CRUDService.getCreateCategoryDropdown()
+    .then((res) => res.json())
+    .then((res) => {
+      const { stageList, userRoles } = res.result;
+      const stageOptions = stageList.map((stageData) => {
+        const { id, stage } = stageData;
+        return {
+          id,
+          value: stage,
+          label: stage,
+        };
+      });
+      const userRoleOptions = userRoles.map((roleData) => {
+        const { id, user_role } = roleData;
+        return {
+          id,
+          value: user_role,
+          label: user_role,
+        };
+      });
+      setStage(stageOptions);
+      setUserRole(userRoleOptions);
+    });
+};
 
-const userRoleOptions = [
-  {
-    value: "Admin",
-    label: "admin",
-  },
-  {
-    value: "Lab Assitant",
-    label: "lab_assitant",
-  },
-];
+const CreateNewCategoryModalContent = ({ closeModal }) => {
+  const [form] = useForm();
+  const [stageOptions, setStageOptions] = useState([]);
+  const [userRolesOptions, setUserRolesOptions] = useState([]);
 
-const CreateNewCategoryModalContent = () => {
-  const onFinish = (values) => {
-    console.log("Success:", values);
+  const utils = useContext(CategoryContext);
+  const {
+    needFetchCreateCategoryDropdown,
+    needUpdateCategoryList,
+    categoryListUpdateTrigger,
+  } = utils;
+
+  useEffect(() => {
+    fetchDropdownOptions(setStageOptions, setUserRolesOptions);
+  }, [needFetchCreateCategoryDropdown]);
+
+  const onFinish = async (values) => {
+    const {
+      category,
+      categoryid,
+      p_categoryid,
+      sort,
+      status,
+      stages,
+      user_roles,
+    } = values;
+    const stagesIds = stages
+      .map((stage) => {
+        const option = stageOptions.filter((opt) => opt.value === stage);
+        return option[0].id;
+      })
+      .join(",");
+    const user_rolesIds = user_roles
+      .map((userRole) => {
+        const option = userRolesOptions.filter((opt) => opt.value === userRole);
+        return option[0].id;
+      })
+      .join(",");
+    await CRUDService.inserCategory(
+      category,
+      categoryid,
+      p_categoryid,
+      sort,
+      status,
+      stagesIds.length > 0 ? stagesIds : null,
+      user_rolesIds.length > 0 ? user_rolesIds : null
+    )
+      .then((res) => res.json())
+      .then((res) => {
+        const { status, result } = res;
+        if (status === "success") {
+          if (result === "category inserted") {
+            alert("inserted successful");
+            closeModal();
+            categoryListUpdateTrigger(!needUpdateCategoryList);
+            form.resetFields();
+            return;
+          }
+          if (result === "has_stage")
+            alert("can not insert duplicate category");
+          return;
+        }
+        alert("inserted failed, error:", result);
+        return;
+      });
   };
 
   const onFinishFailed = (errorInfo) => {
@@ -48,6 +113,7 @@ const CreateNewCategoryModalContent = () => {
         onFinish={onFinish}
         onFinishFailed={onFinishFailed}
         autoComplete="off"
+        form={form}
       >
         <Form.Item
           label="Category ID"
@@ -70,14 +136,12 @@ const CreateNewCategoryModalContent = () => {
           name="stages"
           rules={[{ required: true, message: "Please input stages!" }]}
         >
-          <Input.Group compact>
-            <Select
-              mode="tags"
-              style={{ width: "100%" }}
-              placeholder="Tags Mode"
-              options={stageOptions}
-            />
-          </Input.Group>
+          <Select
+            mode="tags"
+            style={{ width: "100%" }}
+            placeholder="Tags Mode"
+            options={stageOptions}
+          />
         </Form.Item>
 
         <Form.Item
@@ -85,14 +149,12 @@ const CreateNewCategoryModalContent = () => {
           name="user_roles"
           rules={[{ required: true, message: "Please input User Roles!" }]}
         >
-          <Input.Group compact>
-            <Select
-              mode="tags"
-              style={{ width: "100%" }}
-              placeholder="Tags Mode"
-              options={userRoleOptions}
-            />
-          </Input.Group>
+          <Select
+            mode="tags"
+            style={{ width: "100%" }}
+            placeholder="Tags Mode"
+            options={userRolesOptions}
+          />
         </Form.Item>
 
         <Form.Item
@@ -102,14 +164,13 @@ const CreateNewCategoryModalContent = () => {
             { required: true, message: "Please input Parent Category ID!" },
           ]}
         >
-          <Input.Group compact>
-            <Select defaultValue="1">
-              <Option value="1">1</Option>
-              <Option value="2">2</Option>
-              <Option value="3">3</Option>
-              <Option value="4">4</Option>
-            </Select>
-          </Input.Group>
+          <Select>
+            <Option value="NIL">NIL</Option>
+            <Option value="1">1</Option>
+            <Option value="2">2</Option>
+            <Option value="3">3</Option>
+            <Option value="4">4</Option>
+          </Select>
         </Form.Item>
 
         <Form.Item
@@ -117,14 +178,12 @@ const CreateNewCategoryModalContent = () => {
           name="sort"
           rules={[{ required: true, message: "Please input Sort!" }]}
         >
-          <Input.Group compact>
-            <Select defaultValue="1">
-              <Option value="1">1</Option>
-              <Option value="2">2</Option>
-              <Option value="3">3</Option>
-              <Option value="4">4</Option>
-            </Select>
-          </Input.Group>
+          <Select>
+            <Option value="1">1</Option>
+            <Option value="2">2</Option>
+            <Option value="3">3</Option>
+            <Option value="4">4</Option>
+          </Select>
         </Form.Item>
 
         <Form.Item
@@ -132,11 +191,9 @@ const CreateNewCategoryModalContent = () => {
           name="status"
           rules={[{ required: true, message: "Please input status!" }]}
         >
-          <Input.Group compact>
-            <Select defaultValue="Active">
-              <Option value="Active">Active</Option>
-            </Select>
-          </Input.Group>
+          <Select>
+            <Option value="Active">Active</Option>
+          </Select>
         </Form.Item>
 
         <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
@@ -149,10 +206,10 @@ const CreateNewCategoryModalContent = () => {
   );
 };
 
-const CreateNewCategoryModalRender = () => {
+const CreateNewCategoryModalRender = ({ closeModal }) => {
   return (
     <div className="staging-master-container">
-      <CreateNewCategoryModalContent />
+      <CreateNewCategoryModalContent closeModal={closeModal} />
     </div>
   );
 };

@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { Button, Modal } from "antd";
 import CreateNewCategoryModalRender from "./CreateNewCategoryModalRender";
+import { CategoryContext } from "../Category";
 import "./CreateNewCategory.css";
 
 const CreateNewStage = () => {
@@ -8,7 +9,14 @@ const CreateNewStage = () => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [modalText, setModalText] = useState("Content of the modal");
 
+  const utils = useContext(CategoryContext);
+  const {
+    needFetchCreateCategoryDropdown,
+    createCategoryDropdownUpdateTrigger,
+  } = utils;
+
   const showModal = () => {
+    createCategoryDropdownUpdateTrigger(!needFetchCreateCategoryDropdown);
     setOpen(true);
   };
 
@@ -38,7 +46,7 @@ const CreateNewStage = () => {
         onCancel={handleCancel}
         footer
       >
-        <CreateNewCategoryModalRender />
+        <CreateNewCategoryModalRender closeModal={handleCancel} />
       </Modal>
     </div>
   );
